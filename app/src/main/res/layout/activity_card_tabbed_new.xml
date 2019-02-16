@@ -281,7 +281,7 @@
                     android:layout_weight="1"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/photos"
-                    app:srcCompat="@color/browser_actions_divider_color" />
+                    app:srcCompat="@android:color/transparent" />
 
                 <ImageView
                     android:id="@+id/photo2"
@@ -295,7 +295,7 @@
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toEndOf="@+id/photo1"
                     app:layout_constraintTop_toBottomOf="@+id/photos"
-                    app:srcCompat="@color/browser_actions_divider_color" />
+                    app:srcCompat="@android:color/transparent" />
 
                 <ImageView
                     android:id="@+id/photo3"
@@ -306,7 +306,7 @@
                     android:layout_weight="1"
                     app:layout_constraintEnd_toStartOf="@+id/photo4"
                     app:layout_constraintTop_toBottomOf="@+id/photos"
-                    app:srcCompat="@color/browser_actions_divider_color" />
+                    app:srcCompat="@android:color/transparent" />
 
                 <ImageView
                     android:id="@+id/photo4"
@@ -317,7 +317,7 @@
                     android:layout_weight="1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/photos"
-                    app:srcCompat="@color/browser_actions_divider_color" />
+                    app:srcCompat="@android:color/transparent" />
 
                 <TextView
                     android:id="@+id/allPhotos"

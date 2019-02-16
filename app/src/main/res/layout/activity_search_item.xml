@@ -55,6 +55,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:clickable="true"
+        android:visibility="gone"
         algolia:layout_constraintEnd_toEndOf="parent"
         algolia:layout_constraintHorizontal_bias="0.781"
         algolia:layout_constraintStart_toStartOf="parent"

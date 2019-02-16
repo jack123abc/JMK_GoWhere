@@ -102,6 +102,8 @@ public class CardViewTabbed extends BaseActivity
     private static final int CAMERA_INTENT = 3;
 
     private String post_key;
+    private String search_post_key;
+    private Integer key;
 
     private Button uploadPhoto;
 
@@ -117,7 +119,17 @@ public class CardViewTabbed extends BaseActivity
         cardLink = getIntent().getStringExtra("Link");
         cardLatitude = getIntent().getDoubleExtra("Latitude", 0.00);
         cardLongitude = getIntent().getDoubleExtra("Longitude", 0.00);
-        post_key = getIntent().getStringExtra("post_key");
+        key = getIntent().getIntExtra("key",0);
+        if (key == 0){
+
+            post_key = getIntent().getStringExtra("post_key");
+
+        } else if (key == 1){
+
+            post_key = getIntent().getStringExtra("search_post_key");
+
+        }
+
 
 
         allPhotos = (TextView) findViewById(R.id.allPhotos);
@@ -178,85 +190,91 @@ public class CardViewTabbed extends BaseActivity
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                final String imgUrl1 = dataSnapshot.child(post_key).child("1").child("imageUrl").getValue(String.class);
-                final String imgUrl2 = dataSnapshot.child(post_key).child("2").child("imageUrl").getValue(String.class);
-                final String imgUrl3 = dataSnapshot.child(post_key).child("3").child("imageUrl").getValue(String.class);
-                final String imgUrl4 = dataSnapshot.child(post_key).child("4").child("imageUrl").getValue(String.class);
+                //if (dataSnapshot.child(post_key).exists()){
+
+                    final String imgUrl1 = dataSnapshot.child(post_key).child("1").child("imageUrl").getValue(String.class);
+                    final String imgUrl2 = dataSnapshot.child(post_key).child("2").child("imageUrl").getValue(String.class);
+                    final String imgUrl3 = dataSnapshot.child(post_key).child("3").child("imageUrl").getValue(String.class);
+                    final String imgUrl4 = dataSnapshot.child(post_key).child("4").child("imageUrl").getValue(String.class);
+
+                    int rotate1 = getCameraPhotoOrientation(imgUrl1);
+                    int rotate2 = getCameraPhotoOrientation(imgUrl2);
+                    int rotate3 = getCameraPhotoOrientation(imgUrl3);
+                    int rotate4 = getCameraPhotoOrientation(imgUrl4);
+
+                    Picasso.get().load(imgUrl1).centerCrop().resize(300,300).rotate(rotate1).
+                            //transform(new CropSquareTransformation()).
+                                    transform(new RoundedCornersTransformation(30,1,ALL)).
+                            into(photo1);
+                    Picasso.get().load(imgUrl2).centerCrop().resize(300,300).rotate(rotate2 ).
+                            //transform(new CropSquareTransformation()).
+                                    transform(new RoundedCornersTransformation(30,1,ALL)).
+                            into(photo2);
+                    Picasso.get().load(imgUrl3).centerCrop().resize(300,300).rotate(rotate3).
+                            //transform(new CropSquareTransformation()).
+                                    transform(new RoundedCornersTransformation(30,1,ALL)).
+                            into(photo3);
+                    Picasso.get().load(imgUrl4).centerCrop().resize(300,300).rotate(rotate4).
+                            //transform(new CropSquareTransformation()).
+                                    transform(new RoundedCornersTransformation(30,1,ALL)).
+                            into(photo4);
+
+
+                    photo1.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
+                            intent.putExtra("ImageUrl", imgUrl1);
+
+                            view.getContext().startActivity(intent);
+
+                        }
+                    });
+
+                    photo2.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
+                            intent.putExtra("ImageUrl", imgUrl2);
+
+                            view.getContext().startActivity(intent);
+
+                        }
+                    });
+
+                    photo3.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
+                            intent.putExtra("ImageUrl", imgUrl3);
+
+                            view.getContext().startActivity(intent);
+
+                        }
+                    });
+
+                    photo4.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
+                            intent.putExtra("ImageUrl", imgUrl4);
+
+                            view.getContext().startActivity(intent);
+
+                        }
+                    });
+
+                //}
 
                 /*Glide.with(getApplicationContext()).load(imgUrl2).into(photo2);
                 Glide.with(getApplicationContext()).load(imgUrl3).into(photo3);
                 Glide.with(getApplicationContext()).load(imgUrl4).into(photo4);*/
 
-                int rotate1 = getCameraPhotoOrientation(imgUrl1);
-                int rotate2 = getCameraPhotoOrientation(imgUrl2);
-                int rotate3 = getCameraPhotoOrientation(imgUrl3);
-                int rotate4 = getCameraPhotoOrientation(imgUrl4);
 
-                Picasso.get().load(imgUrl1).centerCrop().resize(300,300).rotate(rotate1).
-                        //transform(new CropSquareTransformation()).
-                        transform(new RoundedCornersTransformation(30,1,ALL)).
-                        into(photo1);
-                Picasso.get().load(imgUrl2).centerCrop().resize(300,300).rotate(rotate2 ).
-                        //transform(new CropSquareTransformation()).
-                        transform(new RoundedCornersTransformation(30,1,ALL)).
-                        into(photo2);
-                Picasso.get().load(imgUrl3).centerCrop().resize(300,300).rotate(rotate3).
-                        //transform(new CropSquareTransformation()).
-                        transform(new RoundedCornersTransformation(30,1,ALL)).
-                        into(photo3);
-                Picasso.get().load(imgUrl4).centerCrop().resize(300,300).rotate(rotate4).
-                        //transform(new CropSquareTransformation()).
-                        transform(new RoundedCornersTransformation(30,1,ALL)).
-                        into(photo4);
-
-
-                photo1.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                        Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
-                        intent.putExtra("ImageUrl", imgUrl1);
-
-                        view.getContext().startActivity(intent);
-
-                    }
-                });
-
-                photo2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                        Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
-                        intent.putExtra("ImageUrl", imgUrl2);
-
-                        view.getContext().startActivity(intent);
-
-                    }
-                });
-
-                photo3.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                        Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
-                        intent.putExtra("ImageUrl", imgUrl3);
-
-                        view.getContext().startActivity(intent);
-
-                    }
-                });
-
-                photo4.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-
-                        Intent intent = new Intent(view.getContext(), FullScreenImageActivity.class);
-                        intent.putExtra("ImageUrl", imgUrl4);
-
-                        view.getContext().startActivity(intent);
-
-                    }
-                });
 
             }
 

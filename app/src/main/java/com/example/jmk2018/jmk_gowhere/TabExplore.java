@@ -117,6 +117,7 @@ public class TabExplore extends Fragment {
                         intent.putExtra("Address",model.getAddress());
                         intent.putExtra("Latitude", model.getLatitude());
                         intent.putExtra("Longitude", model.getLongitude());
+                        intent.putExtra("key",0);
 
                         view.getContext().startActivity(intent);
 
@@ -218,6 +219,41 @@ public class TabExplore extends Fragment {
             }
         });
 
+        imgHotSearch1.setOnClickListener(view -> {
+
+            Intent intent = new Intent(view.getContext(),SearchItemActivity.class);
+            intent.putExtra("key",1);
+            intent.putExtra("txt",txtHotSearch1.getText().toString());
+            startActivity(intent);
+
+        });
+
+        imgHotSearch2.setOnClickListener(view -> {
+
+            Intent intent = new Intent(view.getContext(),SearchItemActivity.class);
+            intent.putExtra("key",1);
+            intent.putExtra("txt",txtHotSearch2.getText().toString());
+            startActivity(intent);
+
+        });
+
+        imgHotSearch3.setOnClickListener(view -> {
+
+            Intent intent = new Intent(view.getContext(),SearchItemActivity.class);
+            intent.putExtra("key",1);
+            intent.putExtra("txt",txtHotSearch3.getText().toString());
+            startActivity(intent);
+
+        });
+
+        imgHotSearch4.setOnClickListener(view -> {
+
+            Intent intent = new Intent(view.getContext(),SearchItemActivity.class);
+            intent.putExtra("key",1);
+            intent.putExtra("txt",txtHotSearch4.getText().toString());
+            startActivity(intent);
+
+        });
     }
 
 }

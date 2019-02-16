@@ -1,5 +1,7 @@
 package com.example.jmk2018.jmk_gowhere;
 
+import android.accessibilityservice.AccessibilityService;
+import android.app.Activity;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
@@ -21,6 +23,7 @@ import android.arch.persistence.room.Update;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -51,12 +54,19 @@ import com.algolia.instantsearch.ui.views.SearchBox;
 import com.algolia.instantsearch.utils.ItemClickSupport;
 import com.algolia.search.saas.Query;
 import com.firebase.ui.auth.data.model.User;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.squareup.picasso.Picasso;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.lang.reflect.Type;
 import java.time.Duration;
@@ -67,11 +77,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 import io.paperdb.Paper;
 import io.reactivex.Flowable;
+import jp.wasabeef.picasso.transformations.ColorFilterTransformation;
+import jp.wasabeef.picasso.transformations.CropCircleTransformation;
 
 
 public class SearchItemActivity extends AppCompatActivity {
@@ -88,6 +101,20 @@ public class SearchItemActivity extends AppCompatActivity {
     private TextView record1;
     private TextView record2;
     private TextView record3;
+    private ImageView hotsearch1;
+    private ImageView hotsearch2;
+    private ImageView hotsearch3;
+    private TextView hotsearchtxt1;
+    private TextView hotsearchtxt2;
+    private TextView hotsearchtxt3;
+
+    private Boolean counter;
+    private Integer key;
+    private String txt;
+
+
+    private DatabaseReference mDatabaseHotSearch;
+
 
     //private ArrayList<String> list = new ArrayList<>();
 
@@ -107,6 +134,18 @@ public class SearchItemActivity extends AppCompatActivity {
         record1 = findViewById(R.id.record1);
         record2 = findViewById(R.id.record2);
         record3 = findViewById(R.id.record3);
+        hotsearch1 = findViewById(R.id.hotsearch1);
+        hotsearch2 = findViewById(R.id.hotsearch2);
+        hotsearch3 = findViewById(R.id.hotsearch3);
+        hotsearchtxt1 = findViewById(R.id.hotsearchtxt1);
+        hotsearchtxt2 = findViewById(R.id.hotsearchtxt2);
+        hotsearchtxt3 = findViewById(R.id.hotsearchtxt3);
+        key = getIntent().getIntExtra("key",0);
+        txt = getIntent().getStringExtra("txt");
+
+
+        mDatabaseHotSearch = FirebaseDatabase.getInstance().getReference().child("HotSearch");
+        mDatabaseHotSearch.keepSynced(true);
 
         record1.setVisibility(View.GONE);
         record2.setVisibility(View.GONE);
@@ -116,6 +155,15 @@ public class SearchItemActivity extends AppCompatActivity {
         final InstantSearch helper = new InstantSearch(SearchItemActivity.this, searcher);
 
         ImageView searchClose = (ImageView) searchBox.findViewById(android.support.v7.appcompat.R.id.search_close_btn);
+
+        if (key == 1){
+
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(txt);
+            SoftKeyboardHelper.hide(SearchItemActivity.this,getWindow().getDecorView().getRootView());
+
+        }
 
         searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
@@ -238,10 +286,104 @@ public class SearchItemActivity extends AppCompatActivity {
             }
         });
 
+        mDatabaseHotSearch.addValueEventListener(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                String imgUrl1 = dataSnapshot.child("1").getValue(String.class);
+                String imgUrl2 = dataSnapshot.child("2").getValue(String.class);
+                String imgUrl3 = dataSnapshot.child("3").getValue(String.class);
+
+                String txt1 = dataSnapshot.child("5").getValue(String.class);
+                String txt2 = dataSnapshot.child("6").getValue(String.class);
+                String txt3 = dataSnapshot.child("7").getValue(String.class);
+
+                Picasso.get().load(imgUrl1).
+                        transform(new CropCircleTransformation()).
+                        transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
+                        into(hotsearch1);
+                Picasso.get().load(imgUrl2).
+                        transform(new CropCircleTransformation()).
+                        transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
+                        into(hotsearch2);
+                Picasso.get().load(imgUrl3).
+                        transform(new CropCircleTransformation()).
+                        transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
+                        into(hotsearch3);
+
+                hotsearchtxt2.setText(txt2);
+                hotsearchtxt1.setText(txt1);
+                hotsearchtxt3.setText(txt3);
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
 
 
+            }
+        });
 
-        /*hits.setOnItemClickListener(new ItemClickSupport.OnItemClickListener() {
+
+        record1.setOnClickListener(view -> {
+
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(record1.getText().toString());
+            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+        });
+
+        record2.setOnClickListener(view -> {
+
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(record2.getText().toString());
+            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+        });
+
+        record3.setOnClickListener(view -> {
+
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(record3.getText().toString());
+            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+        });
+
+        hotsearch1.setOnClickListener(view -> {
+
+            Paper.book().write(hotsearchtxt1.getText().toString(),1);
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(hotsearchtxt1.getText().toString());
+            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+        });
+
+        hotsearch2.setOnClickListener(view -> {
+
+            Paper.book().write(hotsearchtxt2.getText().toString(),1);
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(hotsearchtxt2.getText().toString());
+            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+        });
+
+        hotsearch3.setOnClickListener(view -> {
+
+            Paper.book().write(hotsearchtxt3.getText().toString(),1);
+            searchWithoutHits.setVisibility(View.GONE);
+            hits.setVisibility(View.VISIBLE);
+            searcher.search(hotsearchtxt3.getText().toString());
+            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+        });
+
+        hits.setOnItemClickListener(new ItemClickSupport.OnItemClickListener() {
             @Override
             public void onItemClick(RecyclerView recyclerView, int position, View v) {
                 JSONObject hit = hits.get(position);
@@ -255,6 +397,7 @@ public class SearchItemActivity extends AppCompatActivity {
                 String address= null;
                 Double latitude = null;
                 Double longitude = null;
+                String post_key = null;
 
                 try {
                     name = hit.getString("name");
@@ -266,6 +409,7 @@ public class SearchItemActivity extends AppCompatActivity {
                     address = hit.getString("address");
                     latitude = hit.getDouble("latitude");
                     longitude = hit.getDouble("longitude");
+                    post_key = hit.getString("objectID");
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -281,9 +425,36 @@ public class SearchItemActivity extends AppCompatActivity {
                 hitsTabbedIntent.putExtra("Address",address);
                 hitsTabbedIntent.putExtra("Latitude",latitude);
                 hitsTabbedIntent.putExtra("Longitude",longitude);
+                hitsTabbedIntent.putExtra("search_post_key",post_key);
+                hitsTabbedIntent.putExtra("key",1);
                 startActivity(hitsTabbedIntent);
             }
-        });*/
+        });
+
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        counter = true;
+
+        if (searchBox.getQuery().length() >= 1){
+
+            searchBox.setQuery("", false);
+            hits.setVisibility(View.GONE);
+            searchWithoutHits.setVisibility(View.VISIBLE);
+            //Toast.makeText(SearchItemActivity.this,searchBox.getQuery().toString(),Toast.LENGTH_LONG).show();
+            counter = false;
+
+        }
+
+        if (searchBox.getQuery().length() == 0 && counter){
+
+            super.onBackPressed();
+
+        }
+
+
 
     }
 
@@ -295,6 +466,9 @@ public class SearchItemActivity extends AppCompatActivity {
         //Paper.book().destroy();
         super.onDestroy();
     }
+
+
+
 
 
 }
