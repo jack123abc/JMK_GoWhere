@@ -1,71 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:algolia="http://schemas.android.com/apk/res-auto">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:algolia="http://schemas.android.com/apk/res-auto">
 
-    <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.support.v7.widget.CardView
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/hits_card"
         android:layout_width="match_parent"
-        android:layout_height="240dp"
-        android:orientation="vertical"
-        app:cardCornerRadius="12dp"
+        android:layout_height="220dp"
         android:layout_margin="7dp"
         android:elevation="90dp"
-        android:id="@+id/hits_card">
+        android:orientation="vertical"
+        app:cardCornerRadius="12dp">
 
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="240dp"
-            android:background="@color/colorPrimaryDark">
+            android:layout_height="220dp"
+            android:background="#F97E39">
 
             <ImageView
                 android:id="@+id/hits_Image"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_width="0dp"
+                android:layout_height="175dp"
+                android:background="@color/colorHighlighting"
                 android:scaleType="centerCrop"
                 algolia:attribute='@{"imageUrl"}'
-                />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <TextView
                 android:id="@+id/hits_Name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginStart="12dp"
                 android:text="Name"
-                android:textSize="30dp"
                 android:textColor="#ffffff"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
+                android:textSize="18sp"
+                android:textStyle="bold"
                 algolia:attribute='@{"name"}'
-                />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/hits_Image"
+                app:layout_constraintVertical_bias="0.0" />
 
             <TextView
                 android:id="@+id/hits_Location"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="8dp"
                 android:text="Location"
-                android:textSize="30dp"
                 android:textColor="#ffffff"
-                app:layout_constraintBottom_toBottomOf="@id/hits_Image"
-                app:layout_constraintEnd_toEndOf="@id/hits_Image"
+                android:textSize="16sp"
                 algolia:attribute='@{"location"}'
-                />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/hits_Image" />
 
             <TextView
                 android:id="@+id/hits_Category"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginBottom="2dp"
                 android:text="Category"
-                android:textSize="30dp"
                 android:textColor="#ffffff"
-                app:layout_constraintBottom_toBottomOf="@+id/hits_Image"
-                app:layout_constraintStart_toStartOf="@+id/hits_Image"
+                android:textSize="15sp"
                 algolia:attribute='@{"category"}'
-                />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/hits_Name" />
 
             <TextView
                 android:id="@+id/hits_keywords"

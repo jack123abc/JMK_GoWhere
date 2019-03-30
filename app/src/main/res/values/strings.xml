@@ -114,4 +114,6 @@
     <string name="title_activity_full_screen_image">FullScreenImageActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <string name="title_activity_logo">LogoActivity</string>
 </resources>

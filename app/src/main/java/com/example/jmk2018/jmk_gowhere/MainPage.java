@@ -174,7 +174,8 @@ public class MainPage extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main_page, menu);
 
         MenuItem searchViewItem = menu.findItem(R.id.action_search);
-        SearchView searchView = (SearchView) searchViewItem.getActionView();
+        //SearchView searchView = (SearchView) searchViewItem.getActionView();
+        //searchView.clearFocus();
         //searchView.setIconifiedByDefault(true);
 
         return true;
@@ -194,6 +195,8 @@ public class MainPage extends AppCompatActivity {
             case R.id.action_search:
                 Intent intent = new Intent();
                 intent.setClass(MainPage.this, SearchItemActivity.class);
+                intent.putExtra("key",2);
+                //SoftKeyboardHelper.hide(MainPage.this,item.getActionView());
                 startActivity(intent);
                 break;
 

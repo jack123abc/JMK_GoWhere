@@ -40,7 +40,7 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
 
     private DatabaseReference mUsers;
 
-    @Override
+    /*@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_google_sign_in);
@@ -68,12 +68,28 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
-    }
+    }*/
 
     // [START on_start_check_user]
     @Override
     public void onStart() {
         super.onStart();
+
+        // [START config_signin]
+        // Configure Google Sign In
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        // [END config_signin]
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        // [START initialize_auth]
+        // Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
+        // [END initialize_auth]
+
         // Check if user is signed in (non-null) and update UI accordingly.
         signIn();
          //FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -138,7 +154,7 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
     // [END auth_with_google]
 
     // [START signin]
-    private void signIn() {
+    public void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
 
@@ -146,7 +162,7 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
     }
     // [END signin]
 
-    private void signOut() {
+    public void signOut() {
         // Firebase sign out
         mAuth.signOut();
 
@@ -177,8 +193,8 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
     private void updateUI(FirebaseUser user) {
         hideProgressDialog();
         if (user != null) {
-            mStatusTextView.setText(getString(R.string.google_status_fmt, user.getEmail()));
-            mDetailTextView.setText(getString(R.string.firebase_status_fmt, user.getUid()));
+            //mStatusTextView.setText(getString(R.string.google_status_fmt, user.getEmail()));
+            //mDetailTextView.setText(getString(R.string.firebase_status_fmt, user.getUid()));
 
             mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
 
@@ -191,8 +207,8 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
             //findViewById(R.id.gmailSignInButton).setVisibility(View.GONE);
             //findViewById(R.id.signOutAndDisconnect).setVisibility(View.VISIBLE);
         } else {
-            mStatusTextView.setText(R.string.signed_out);
-            mDetailTextView.setText(null);
+            //mStatusTextView.setText(R.string.signed_out);
+            //mDetailTextView.setText(null);
 
             //findViewById(R.id.gmailSignInButton).setVisibility(View.VISIBLE);
             //findViewById(R.id.signOutAndDisconnect).setVisibility(View.GONE);

@@ -1,6 +1,7 @@
 package com.example.jmk2018.jmk_gowhere;
 
 import android.accessibilityservice.AccessibilityService;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
@@ -40,6 +41,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SearchEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -78,6 +80,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -96,60 +99,41 @@ public class SearchItemActivity extends AppCompatActivity {
     private Searcher searcher;
     private Hits hits;
     private SearchBox searchBox;
+
     private ConstraintLayout searchWithoutHits;
     private FloatingActionButton fab;
-    private TextView record1;
-    private TextView record2;
-    private TextView record3;
     private ImageView hotsearch1;
     private ImageView hotsearch2;
     private ImageView hotsearch3;
-    private TextView hotsearchtxt1;
-    private TextView hotsearchtxt2;
-    private TextView hotsearchtxt3;
 
     private Boolean counter;
     private Integer key;
     private String txt;
 
-
     private DatabaseReference mDatabaseHotSearch;
 
-
-    //private ArrayList<String> list = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_item);
 
-        final String TAG = "hihi";
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        Paper.init(this);
+        final String TAG = "hihi";
 
         searchBox = findViewById(R.id.searchBox);
         hits = findViewById(R.id.hits);
         searchWithoutHits = findViewById(R.id.searchWithoutHits);
         fab = findViewById(R.id.fab);
-        record1 = findViewById(R.id.record1);
-        record2 = findViewById(R.id.record2);
-        record3 = findViewById(R.id.record3);
         hotsearch1 = findViewById(R.id.hotsearch1);
         hotsearch2 = findViewById(R.id.hotsearch2);
         hotsearch3 = findViewById(R.id.hotsearch3);
-        hotsearchtxt1 = findViewById(R.id.hotsearchtxt1);
-        hotsearchtxt2 = findViewById(R.id.hotsearchtxt2);
-        hotsearchtxt3 = findViewById(R.id.hotsearchtxt3);
         key = getIntent().getIntExtra("key",0);
         txt = getIntent().getStringExtra("txt");
 
-
         mDatabaseHotSearch = FirebaseDatabase.getInstance().getReference().child("HotSearch");
         mDatabaseHotSearch.keepSynced(true);
-
-        record1.setVisibility(View.GONE);
-        record2.setVisibility(View.GONE);
-        record3.setVisibility(View.GONE);
 
         searcher = Searcher.create(ALGOLIA_APP_ID, ALGOLIA_SEARCH_API_KEY, ALGOLIA_INDEX_NAME);
         final InstantSearch helper = new InstantSearch(SearchItemActivity.this, searcher);
@@ -158,22 +142,24 @@ public class SearchItemActivity extends AppCompatActivity {
 
         if (key == 1){
 
+            //searchView.setVisibility(View.GONE);
+            searchBox.setVisibility(View.VISIBLE);
             searchWithoutHits.setVisibility(View.GONE);
             hits.setVisibility(View.VISIBLE);
             searcher.search(txt);
-            SoftKeyboardHelper.hide(SearchItemActivity.this,getWindow().getDecorView().getRootView());
+
+        } else if (key == 2){
+
+            hideKeyboard();
 
         }
 
-        searchBox.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        searchBox.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
 
             @Override
             public boolean onQueryTextSubmit(String query) {
 
                 Log.d(TAG, "onQueryTextSumbit = " + query);
-
-                //list.add(query);
-                Paper.book().write(query,1);
 
                 helper.search(query);
 
@@ -205,44 +191,13 @@ public class SearchItemActivity extends AppCompatActivity {
 
         });
 
-        if (Paper.book().getAllKeys().size() == 1){
-
-            record1.setVisibility(View.VISIBLE);
-            record1.setText(Paper.book().getAllKeys().get(0));
-
-        } else if (Paper.book().getAllKeys().size() == 2){
-
-            record1.setVisibility(View.VISIBLE);
-            record1.setText(Paper.book().getAllKeys().get(1));
-            record2.setVisibility(View.VISIBLE);
-            record2.setText(Paper.book().getAllKeys().get(0));
-
-        } else if (Paper.book().getAllKeys().size() >= 3){
-
-            record1.setVisibility(View.VISIBLE);
-            record1.setText(Paper.book().getAllKeys().get(Paper.book().getAllKeys().size()-1));
-            record2.setVisibility(View.VISIBLE);
-            record2.setText(Paper.book().getAllKeys().get(Paper.book().getAllKeys().size()-2));
-            record3.setVisibility(View.VISIBLE);
-            record3.setText(Paper.book().getAllKeys().get(Paper.book().getAllKeys().size()-3));
-
-        } else {
-
-            record1.setVisibility(View.GONE);
-            record2.setVisibility(View.GONE);
-            record3.setVisibility(View.GONE);
-
-        }
-
         fab.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("RestrictedApi")
             @Override
             public void onClick(View view) {
 
-                Paper.book().destroy();
-
-                record1.setVisibility(View.GONE);
-                record2.setVisibility(View.GONE);
-                record3.setVisibility(View.GONE);
+                SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+                fab.setVisibility(View.GONE);
 
                 Log.d(TAG,Paper.book().getAllKeys().toString());
                 //Toast.makeText(SearchItemActivity.this,,Toast.LENGTH_LONG).show();
@@ -259,30 +214,6 @@ public class SearchItemActivity extends AppCompatActivity {
                 searchBox.setQuery("",false);
                 searchBox.requestFocus();
 
-                if (Paper.book().getAllKeys().size() == 1){
-
-                    record1.setVisibility(View.VISIBLE);
-                    record1.setText(Paper.book().getAllKeys().get(0));
-
-                } else if (Paper.book().getAllKeys().size() == 2){
-
-                    record1.setVisibility(View.VISIBLE);
-                    record1.setText(Paper.book().getAllKeys().get(1));
-                    record2.setVisibility(View.VISIBLE);
-                    record2.setText(Paper.book().getAllKeys().get(0));
-
-                } else if (Paper.book().getAllKeys().size() >= 3){
-
-                    record1.setVisibility(View.VISIBLE);
-                    record1.setText(Paper.book().getAllKeys().get(Paper.book().getAllKeys().size()-1));
-                    record2.setVisibility(View.VISIBLE);
-                    record2.setText(Paper.book().getAllKeys().get(Paper.book().getAllKeys().size()-2));
-                    record3.setVisibility(View.VISIBLE);
-                    record3.setText(Paper.book().getAllKeys().get(Paper.book().getAllKeys().size()-3));
-
-                }
-
-                Log.d(TAG,Paper.book().getAllKeys().toString());
             }
         });
 
@@ -295,26 +226,18 @@ public class SearchItemActivity extends AppCompatActivity {
                 String imgUrl2 = dataSnapshot.child("2").getValue(String.class);
                 String imgUrl3 = dataSnapshot.child("3").getValue(String.class);
 
-                String txt1 = dataSnapshot.child("5").getValue(String.class);
-                String txt2 = dataSnapshot.child("6").getValue(String.class);
-                String txt3 = dataSnapshot.child("7").getValue(String.class);
-
                 Picasso.get().load(imgUrl1).
-                        transform(new CropCircleTransformation()).
+                        //transform(new CropCircleTransformation()).
                         transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
                         into(hotsearch1);
                 Picasso.get().load(imgUrl2).
-                        transform(new CropCircleTransformation()).
+                        //transform(new CropCircleTransformation()).
                         transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
                         into(hotsearch2);
                 Picasso.get().load(imgUrl3).
-                        transform(new CropCircleTransformation()).
+                        //transform(new CropCircleTransformation()).
                         transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
                         into(hotsearch3);
-
-                hotsearchtxt2.setText(txt2);
-                hotsearchtxt1.setText(txt1);
-                hotsearchtxt3.setText(txt3);
 
             }
 
@@ -325,110 +248,87 @@ public class SearchItemActivity extends AppCompatActivity {
             }
         });
 
-
-        record1.setOnClickListener(view -> {
-
-            searchWithoutHits.setVisibility(View.GONE);
-            hits.setVisibility(View.VISIBLE);
-            searcher.search(record1.getText().toString());
-            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
-
-        });
-
-        record2.setOnClickListener(view -> {
-
-            searchWithoutHits.setVisibility(View.GONE);
-            hits.setVisibility(View.VISIBLE);
-            searcher.search(record2.getText().toString());
-            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
-
-        });
-
-        record3.setOnClickListener(view -> {
-
-            searchWithoutHits.setVisibility(View.GONE);
-            hits.setVisibility(View.VISIBLE);
-            searcher.search(record3.getText().toString());
-            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
-
-        });
-
         hotsearch1.setOnClickListener(view -> {
 
-            Paper.book().write(hotsearchtxt1.getText().toString(),1);
+            //searchView.setVisibility(View.GONE);
+            searchBox.setVisibility(View.VISIBLE);
+            //searchIcon.setVisibility(View.GONE);
             searchWithoutHits.setVisibility(View.GONE);
             hits.setVisibility(View.VISIBLE);
-            searcher.search(hotsearchtxt1.getText().toString());
+            searcher.search("體驗");
             SoftKeyboardHelper.hide(SearchItemActivity.this,view);
 
         });
 
         hotsearch2.setOnClickListener(view -> {
 
-            Paper.book().write(hotsearchtxt2.getText().toString(),1);
+            //searchView.setVisibility(View.GONE);
+            searchBox.setVisibility(View.VISIBLE);
+            //searchIcon.setVisibility(View.GONE);
             searchWithoutHits.setVisibility(View.GONE);
             hits.setVisibility(View.VISIBLE);
-            searcher.search(hotsearchtxt2.getText().toString());
+            searcher.search("手作");
             SoftKeyboardHelper.hide(SearchItemActivity.this,view);
 
         });
 
         hotsearch3.setOnClickListener(view -> {
 
-            Paper.book().write(hotsearchtxt3.getText().toString(),1);
+            //searchView.setVisibility(View.GONE);
+            searchBox.setVisibility(View.VISIBLE);
+            //searchIcon.setVisibility(View.GONE);
             searchWithoutHits.setVisibility(View.GONE);
             hits.setVisibility(View.VISIBLE);
-            searcher.search(hotsearchtxt3.getText().toString());
+            searcher.search("休閑");
             SoftKeyboardHelper.hide(SearchItemActivity.this,view);
 
         });
 
-        hits.setOnItemClickListener(new ItemClickSupport.OnItemClickListener() {
-            @Override
-            public void onItemClick(RecyclerView recyclerView, int position, View v) {
-                JSONObject hit = hits.get(position);
 
-                String name = null;// Or "foo" if you want the "foo" attribute
-                String location = null;
-                String category = null;
-                String imageUrl = null;
-                String phoneNumber = null;
-                String link = null;
-                String address= null;
-                Double latitude = null;
-                Double longitude = null;
-                String post_key = null;
 
-                try {
-                    name = hit.getString("name");
-                    location = hit.getString("location");
-                    category = hit.getString("category");
-                    imageUrl = hit.getString("imageUrl");
-                    phoneNumber = hit.getString("phone");
-                    link = hit.getString("link");
-                    address = hit.getString("address");
-                    latitude = hit.getDouble("latitude");
-                    longitude = hit.getDouble("longitude");
-                    post_key = hit.getString("objectID");
+        hits.setOnItemClickListener((recyclerView, position, v) -> {
+            JSONObject hit = hits.get(position);
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            String name = null;// Or "foo" if you want the "foo" attribute
+            String location = null;
+            String category = null;
+            String imageUrl = null;
+            String phoneNumber = null;
+            String link = null;
+            String address= null;
+            Double latitude = null;
+            Double longitude = null;
+            String post_key = null;
 
-                Intent hitsTabbedIntent = new Intent (SearchItemActivity.this, CardViewTabbed.class);
-                hitsTabbedIntent.putExtra("Name",name);
-                hitsTabbedIntent.putExtra("Location",location);
-                hitsTabbedIntent.putExtra("Category",category);
-                hitsTabbedIntent.putExtra("ImageUrl",imageUrl);
-                hitsTabbedIntent.putExtra("Phone Number",phoneNumber);
-                hitsTabbedIntent.putExtra("Link",link);
-                hitsTabbedIntent.putExtra("Address",address);
-                hitsTabbedIntent.putExtra("Latitude",latitude);
-                hitsTabbedIntent.putExtra("Longitude",longitude);
-                hitsTabbedIntent.putExtra("search_post_key",post_key);
-                hitsTabbedIntent.putExtra("key",1);
-                startActivity(hitsTabbedIntent);
+            try {
+                name = hit.getString("name");
+                location = hit.getString("location");
+                category = hit.getString("category");
+                imageUrl = hit.getString("imageUrl");
+                phoneNumber = hit.getString("phone");
+                link = hit.getString("link");
+                address = hit.getString("address");
+                latitude = hit.getDouble("latitude");
+                longitude = hit.getDouble("longitude");
+                post_key = hit.getString("objectID");
+
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
+
+            Intent hitsTabbedIntent = new Intent (SearchItemActivity.this, CardViewTabbed.class);
+            hitsTabbedIntent.putExtra("Name",name);
+            hitsTabbedIntent.putExtra("Location",location);
+            hitsTabbedIntent.putExtra("Category",category);
+            hitsTabbedIntent.putExtra("ImageUrl",imageUrl);
+            hitsTabbedIntent.putExtra("Phone Number",phoneNumber);
+            hitsTabbedIntent.putExtra("Link",link);
+            hitsTabbedIntent.putExtra("Address",address);
+            hitsTabbedIntent.putExtra("Latitude",latitude);
+            hitsTabbedIntent.putExtra("Longitude",longitude);
+            hitsTabbedIntent.putExtra("search_post_key",post_key);
+            hitsTabbedIntent.putExtra("key",1);
+            startActivity(hitsTabbedIntent);
         });
 
     }
@@ -467,8 +367,18 @@ public class SearchItemActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override
+    public void onStart() {
 
+        Toast.makeText(SearchItemActivity.this,"gg",Toast.LENGTH_LONG).show();
 
+        super.onStart();
+
+    }
+
+    private void hideKeyboard() {
+        searchBox.clearFocus();
+    }
 
 
 }
