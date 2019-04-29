@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:algolia="http://schemas.android.com/apk/res-auto">
 
-    <android.support.v7.widget.CardView
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <android.support.v7.widget.CardView xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/hits_card"
         android:layout_width="match_parent"
         android:layout_height="220dp"
@@ -53,6 +53,27 @@
                 algolia:attribute='@{"location"}'
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/hits_Image" />
+
+            <ImageView
+                android:id="@+id/hits_likeButton"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginEnd="8dp"
+                algolia:layout_constraintBottom_toBottomOf="parent"
+                algolia:layout_constraintEnd_toEndOf="parent"
+                algolia:srcCompat="@drawable/ic_favorite_border_black_24dp" />
+
+            <TextView
+                android:id="@+id/hits_numOfLikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="500"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                algolia:attribute='@{"like"}'
+                algolia:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/hits_likeButton" />
 
             <TextView
                 android:id="@+id/hits_Category"

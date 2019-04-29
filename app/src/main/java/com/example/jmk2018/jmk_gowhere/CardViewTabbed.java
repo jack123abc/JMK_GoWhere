@@ -22,9 +22,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +52,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -65,6 +69,8 @@ import com.vansuita.pickimage.dialog.PickImageDialog;
 import com.vansuita.pickimage.listeners.IPickCancel;
 import com.vansuita.pickimage.listeners.IPickResult;
 
+import org.w3c.dom.Text;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -75,8 +81,7 @@ import static android.widget.LinearLayout.VERTICAL;
 import static java.security.AccessController.getContext;
 import static jp.wasabeef.picasso.transformations.RoundedCornersTransformation.CornerType.ALL;
 
-public class CardViewTabbed extends BaseActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class CardViewTabbed extends FirebaseUIActivity {
 
     private String cardCategory;
     private String cardName;
@@ -86,16 +91,24 @@ public class CardViewTabbed extends BaseActivity
     private String cardAddress;
     private Double cardLatitude;
     private Double cardLongitude;
+    private String cardTag;
 
     private DatabaseReference mDatabasePhotos;
     private StorageReference mStorage;
+    private DatabaseReference mDatabase;
+    DatabaseReference mDatabaseLike;
+    FirebaseAuth mAuth;
+    DatabaseReference mUsers;
+    FirebaseUser currentUser;
 
     private ImageView photo1;
     private ImageView photo2;
     private ImageView photo3;
     private ImageView photo4;
+    private ImageView likeButton;
 
     private TextView allPhotos;
+    private TextView numOfLikes;
 
     private static final int REQUEST_PHONE_CALL = 1;
     private static final int GALLERY_INTENT = 2;
@@ -106,6 +119,12 @@ public class CardViewTabbed extends BaseActivity
     private Integer key;
 
     private Button uploadPhoto;
+
+    private DrawerLayout drawer;
+
+
+    private boolean mProcessLike = false;
+    NavigationView navigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +138,7 @@ public class CardViewTabbed extends BaseActivity
         cardLink = getIntent().getStringExtra("Link");
         cardLatitude = getIntent().getDoubleExtra("Latitude", 0.00);
         cardLongitude = getIntent().getDoubleExtra("Longitude", 0.00);
+        cardTag = getIntent().getStringExtra("Tag");
         key = getIntent().getIntExtra("key",0);
         if (key == 0){
 
@@ -129,8 +149,6 @@ public class CardViewTabbed extends BaseActivity
             post_key = getIntent().getStringExtra("search_post_key");
 
         }
-
-
 
         allPhotos = (TextView) findViewById(R.id.allPhotos);
         allPhotos.setPaintFlags(allPhotos.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
@@ -149,38 +167,104 @@ public class CardViewTabbed extends BaseActivity
         cardImageUrl = getIntent().getStringExtra("ImageUrl");
         Glide.with(this).load(cardImageUrl).into(imgImage);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
         TextView txtName = (TextView) findViewById(R.id.name);
         TextView txtCategory = (TextView) findViewById(R.id.category);
         TextView txtPhoneNumber = (TextView) findViewById(R.id.phoneNumber);
         TextView txtLink = (TextView) findViewById(R.id.link);
         TextView txtAddress = (TextView) findViewById(R.id.address);
+        TextView txtKeywords = findViewById(R.id.tag);
 
         photo1 = (ImageView) findViewById(R.id.photo1);
         photo2 = (ImageView) findViewById(R.id.photo2);
         photo3 = (ImageView) findViewById(R.id.photo3);
         photo4 = (ImageView) findViewById(R.id.photo4);
+        likeButton = (ImageView) findViewById(R.id.likeButton2);
 
         uploadPhoto = (Button) findViewById(R.id.uploadPhoto);
 
         ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.cardviewtabbed_content);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
+        drawer = findViewById(R.id.drawer_layout);
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        txtLink.setPaintFlags(txtLink.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        //actionBar.setHomeButtonEnabled(true);
+        actionBar.setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
+        actionBar.setTitle(Html.fromHtml("<font color='#ffffff'>GoWhere</font>"));
+
+        toolbar.setNavigationOnClickListener(view -> {
+
+            drawer.openDrawer(GravityCompat.START);
+
+        });
+
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        //navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setItemIconTintList(null);
+        navigationView.setNavigationItemSelectedListener(
+                item -> {
+                    int id = item.getItemId();
+
+                    if(id == R.id.nav_explore){
+                        Intent intent = new Intent(CardViewTabbed.this, MainPage.class);
+                        intent.putExtra("Tab",0);
+                        startActivity(intent);
+                        //mViewPager.setCurrentItem(0);
+                    } else if (id == R.id.nav_promotion){
+                        Intent intent = new Intent(CardViewTabbed.this, MainPage.class);
+                        intent.putExtra("Tab",1);
+                        startActivity(intent);
+                        //mViewPager.setCurrentItem(1);
+                    } else if (id == R.id.nav_settings){
+
+                    } else if (id == R.id.nav_signout){
+                        if (isSignIn() ==true){
+                            signOut();
+                        }
+                        Intent intent = new Intent(CardViewTabbed.this, FrontPage.class);
+                        startActivity(intent);
+                    }
+
+                    DrawerLayout drawer1 = (DrawerLayout) findViewById(R.id.drawer_layout);
+                    drawer1.closeDrawer(GravityCompat.START);
+                    return true;
+
+                }
+        );
+
+        drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(@NonNull View view, float v) {
+                // Respond when the drawer's position changes
+            }
+
+            @Override
+            public void onDrawerOpened(@NonNull View view) {
+                // Respond when the drawer is opened
+            }
+
+            @Override
+            public void onDrawerClosed(@NonNull View view) {
+                clearMenuItem();
+                // Respond when the drawer is closed
+            }
+
+            @Override
+            public void onDrawerStateChanged(int i) {
+                // Respond when the drawer motion state changes
+            }
+        });
 
         txtCategory.setText(cardCategory);
         txtName.setText(cardName);
         txtPhoneNumber.setText(cardPhoneNumber);
         txtLink.setText(cardLink);
         txtAddress.setText(cardAddress);
+        txtKeywords.setText(cardTag);
 
         mDatabasePhotos = FirebaseDatabase.getInstance().getReference().child("Photos");
 
@@ -422,6 +506,102 @@ public class CardViewTabbed extends BaseActivity
             }
         });
 
+        numOfLikes = findViewById(R.id.numberOfLikes);
+
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("Database");
+
+        mDatabase.child(post_key).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                Long numberOfLikes = dataSnapshot.child("like").getValue(Long.TYPE);
+
+                numOfLikes.setText(String.valueOf(numberOfLikes));
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
+
+        mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Likes");
+
+        mDatabaseLike.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                if (updateUI(mAuth.getCurrentUser())==true) {
+
+                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())){
+
+                        likeButton.setImageResource(R.drawable.ic_favorite_black_24dp);
+
+                    } else {
+
+                        likeButton.setImageResource(R.drawable.ic_favorite_border_black_24dp);
+
+                    }
+
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        likeButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View view){
+
+                mProcessLike = true;
+
+                mDatabaseLike.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                        if (updateUI(currentUser) == true){
+
+                            if (mProcessLike) {
+
+                                if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+
+                                    mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
+
+                                    mProcessLike = false;
+
+                                } else {
+
+                                    mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("Hi");
+
+                                    mProcessLike = false;
+
+                                }
+                            }
+
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+
+            }
+
+        });
+
     }
 
     /*@Override
@@ -455,7 +635,6 @@ public class CardViewTabbed extends BaseActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -485,7 +664,7 @@ public class CardViewTabbed extends BaseActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
+    /*@SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
@@ -511,7 +690,7 @@ public class CardViewTabbed extends BaseActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
+    }*/
 
     public static int getCameraPhotoOrientation(String imageFilePath) {
         int rotate = 0;
@@ -553,7 +732,46 @@ public class CardViewTabbed extends BaseActivity
         }
     }
 
+    private boolean updateUI(FirebaseUser user) {
 
+        if (user != null) {
+
+            mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+            mUsers.child(user.getUid()).child("Email").setValue(user.getEmail());
+
+            if (user.isEmailVerified()==true){
+
+                return true;
+
+            } else {
+
+                return false;
+
+            }
+
+        } else {
+
+            return false;
+
+        }
+    }
+
+    private boolean isSignIn(){
+        FirebaseUser currentUser;
+        currentUser = mAuth.getCurrentUser();
+
+        return updateUI(currentUser);
+
+    }
+
+    private void clearMenuItem(){
+
+        int size = navigationView.getMenu().size();
+        for (int i = 0; i < size; i++) {
+            navigationView.getMenu().getItem(i).setChecked(false);
+        }
+
+    }
 
 
 }

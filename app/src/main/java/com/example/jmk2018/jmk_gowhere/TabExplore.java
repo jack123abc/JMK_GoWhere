@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -32,6 +33,8 @@ public class TabExplore extends Fragment {
     private boolean mProcessLike = false;
 
     private FirebaseAuth mAuth;
+    private DatabaseReference mUsers;
+    private FirebaseUser currentUser;
 
     private ImageView imgHotSearch1;
     private ImageView imgHotSearch2;
@@ -42,6 +45,8 @@ public class TabExplore extends Fragment {
     private TextView txtHotSearch2;
     private TextView txtHotSearch3;
     private TextView txtHotSearch4;
+
+    private Integer signOut;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -64,6 +69,8 @@ public class TabExplore extends Fragment {
         exploreLLM.setAutoMeasureEnabled(true);
 
         mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
 
         imgHotSearch1 = rootView.findViewById(R.id.imgHotSearch1);
         imgHotSearch2 = rootView.findViewById(R.id.imgHotSearch2);
@@ -117,6 +124,7 @@ public class TabExplore extends Fragment {
                         intent.putExtra("Address",model.getAddress());
                         intent.putExtra("Latitude", model.getLatitude());
                         intent.putExtra("Longitude", model.getLongitude());
+                        intent.putExtra("Tag",model.getKeywords());
                         intent.putExtra("key",0);
 
                         view.getContext().startActivity(intent);
@@ -137,23 +145,26 @@ public class TabExplore extends Fragment {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                                    if (mProcessLike) {
+                                    if (updateUI(currentUser) == true){
 
-                                        if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
+                                        if (mProcessLike) {
 
-                                            mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
+                                            if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())) {
 
-                                            mProcessLike = false;
+                                                mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).removeValue();
 
-                                        } else {
+                                                mProcessLike = false;
 
-                                            mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("Hi");
+                                            } else {
 
-                                            mProcessLike = false;
+                                                mDatabaseLike.child(post_key).child(mAuth.getCurrentUser().getUid()).setValue("Hi");
 
+                                                mProcessLike = false;
+
+                                            }
                                         }
-                                    }
 
+                                    }
 
                                 }
 
@@ -254,6 +265,30 @@ public class TabExplore extends Fragment {
             startActivity(intent);
 
         });
+    }
+
+    private boolean updateUI(FirebaseUser user) {
+
+        if (user != null) {
+
+            mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+            mUsers.child(user.getUid()).child("Email").setValue(user.getEmail());
+
+            if (user.isEmailVerified()==true){
+
+                return true;
+
+            } else {
+
+                return false;
+
+            }
+
+        } else {
+
+            return false;
+
+        }
     }
 
 }

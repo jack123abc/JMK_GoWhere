@@ -1,15 +1,19 @@
 package com.example.jmk2018.jmk_gowhere;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +33,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -48,6 +53,10 @@ public class FrontPage extends FirebaseUIActivity implements
     // [START declare_auth]
     private FirebaseAuth mAuth;
     // [END declare_auth]
+
+    private String username = "";
+
+    private FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,16 +87,9 @@ public class FrontPage extends FirebaseUIActivity implements
 
         textLoginLater.setPaintFlags(textLoginLater.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
-        /*backgroundImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intentToMainPage = new Intent();
-                intentToMainPage.setClass(FrontPage.this,MainPage.class);
-                startActivity(intentToMainPage);
-            }
-        });*/
-
     }
+
+
 
     private void createAccount(String email, String password) {
         Log.d(TAG, "createAccount:" + email);
@@ -159,13 +161,9 @@ public class FrontPage extends FirebaseUIActivity implements
 
                 signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
                 if (validateForm()){
-
                     counter = 0;
-
                 } else {
-
                     counter = 1;
-
                 }
 
             }
@@ -191,11 +189,13 @@ public class FrontPage extends FirebaseUIActivity implements
         } else if (i == R.id.emailCreateAccountButton2) {
 
             createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
+            //showAlertDialog();
 
         } else if (i == R.id.textLoginLater) {
 
             Intent intentToMainPage = new Intent();
             intentToMainPage.setClass(FrontPage.this, MainPage.class);
+            intentToMainPage.putExtra("notSignIn",true);
             startActivity(intentToMainPage);
 
         }
@@ -342,6 +342,7 @@ public class FrontPage extends FirebaseUIActivity implements
                             Log.d(TAG, "signInWithEmail:success");
                             FirebaseUser user = mAuth.getCurrentUser();
                             updateUI(user);
+                            //updateUserProfileName(username);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
@@ -361,6 +362,57 @@ public class FrontPage extends FirebaseUIActivity implements
         // [END sign_in_with_email]
     }
 
+    /*public void showAlertDialog(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Please Type In Your Username");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                username = input.getText().toString();
+
+            }
+        });
+
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                if (username == ""){
+                    Toast.makeText(FrontPage.this,"Please type in your username",Toast.LENGTH_LONG).show();
+                    showAlertDialog();
+                }
+            }
+        });
+
+        builder.show();
+
+    }
+
+    public void updateUserProfileName(String name){
+
+        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .build();
+
+        user.updateProfile(profileUpdates)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "User profile updated.");
+                        }
+                    }
+                });
+
+    }*/
 
 
 

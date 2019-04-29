@@ -46,7 +46,7 @@
         </activity>
         <activity
             android:name=".CardViewTabbed"
-            android:label="@string/title_activity_card_view_tabbed"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.

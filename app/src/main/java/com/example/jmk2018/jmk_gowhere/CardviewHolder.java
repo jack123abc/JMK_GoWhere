@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -35,10 +36,31 @@ public class CardviewHolder extends RecyclerView.ViewHolder{
     String cLink;
     Long cNumOfLikes;
     Integer cBooking;
+    Integer cLike;
+    String cGroup;
 
     ImageView likeButton;
     DatabaseReference mDatabaseLike;
+    DatabaseReference mDatabase;
     FirebaseAuth mAuth;
+    DatabaseReference mUsers;
+    FirebaseUser currentUser;
+
+    public Integer getcLike() {
+        return cLike;
+    }
+
+    public void setcLike(Integer cLike) {
+        this.cLike = cLike;
+    }
+
+    public String getcGroup() {
+        return cGroup;
+    }
+
+    public void setcGroup(String cGroup) {
+        this.cGroup = cGroup;
+    }
 
     public CardviewHolder(View itemView){
         super(itemView);
@@ -48,7 +70,10 @@ public class CardviewHolder extends RecyclerView.ViewHolder{
         likeButton = (ImageView) mView.findViewById(R.id.likeButton);
 
         mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Likes");
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("Database");
         mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
 
         mDatabaseLike.keepSynced(true);
 
@@ -122,13 +147,19 @@ public class CardviewHolder extends RecyclerView.ViewHolder{
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())){
+                if (updateUI(mAuth.getCurrentUser())==true) {
 
-                    likeButton.setImageResource(R.drawable.ic_favorite_black_24dp);
+                    if (dataSnapshot.child(post_key).hasChild(mAuth.getCurrentUser().getUid())){
 
-                } else {
+                        likeButton.setImageResource(R.drawable.ic_favorite_black_24dp);
 
-                    likeButton.setImageResource(R.drawable.ic_favorite_border_black_24dp);
+
+                    } else {
+
+                        likeButton.setImageResource(R.drawable.ic_favorite_border_black_24dp);
+
+
+                    }
 
                 }
 
@@ -149,6 +180,9 @@ public class CardviewHolder extends RecyclerView.ViewHolder{
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 cNumOfLikes = dataSnapshot.getChildrenCount();
+
+                mDatabase.child(post_key).child("like").setValue(cNumOfLikes);
+
                 TextView card_numOfLikes = (TextView) mView.findViewById(R.id.numOfLikes);
                 card_numOfLikes.setText(String.valueOf(cNumOfLikes));
             }
@@ -160,6 +194,30 @@ public class CardviewHolder extends RecyclerView.ViewHolder{
         });
 
 
+    }
+
+    private boolean updateUI(FirebaseUser user) {
+
+        if (user != null) {
+
+            mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+            mUsers.child(user.getUid()).child("Email").setValue(user.getEmail());
+
+            if (user.isEmailVerified()==true){
+
+                return true;
+
+            } else {
+
+                return false;
+
+            }
+
+        } else {
+
+            return false;
+
+        }
     }
 
 }

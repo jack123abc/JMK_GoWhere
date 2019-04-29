@@ -1,5 +1,6 @@
 package com.example.jmk2018.jmk_gowhere;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,24 @@ import java.util.List;
 public class FirebaseUIActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
+
+    public ProgressDialog mProgressDialog;
+
+    public void showProgressDialog() {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(this);
+            mProgressDialog.setMessage(getString(R.string.loading));
+            mProgressDialog.setIndeterminate(true);
+        }
+
+        mProgressDialog.show();
+    }
+
+    public void hideProgressDialog() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

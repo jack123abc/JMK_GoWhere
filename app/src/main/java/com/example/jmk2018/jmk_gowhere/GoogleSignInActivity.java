@@ -135,6 +135,7 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
+
                             FirebaseUser user = mAuth.getCurrentUser();
                             updateUI(user);
                         } else {
@@ -190,6 +191,29 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
                 });
     }
 
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {//代表有成功
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+
+            // Signed in successfully, show authenticated UI.
+            //大概可以取的到這些
+
+            Log.d("TAG",
+                    account.getDisplayName()+
+                            account.getGivenName()+
+                            account.getFamilyName()+
+                            account.getEmail()+
+                            account.getId()+
+                            account.getPhotoUrl());
+
+        } catch (ApiException e) {//代表沒成功
+            // The ApiException status code indicates the detailed failure reason.
+            // Please refer to the GoogleSignInStatusCodes class reference for more information.
+            Log.w("TAG", "signInResult:failed code=" + e.getStatusCode());
+            updateUI(null);
+        }
+    }
+
     private void updateUI(FirebaseUser user) {
         hideProgressDialog();
         if (user != null) {
@@ -202,6 +226,7 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
 
             Intent intentToMainPage = new Intent();
             intentToMainPage.setClass(GoogleSignInActivity.this,MainPage.class);
+            intentToMainPage.putExtra("setGoogleName",true);
             startActivity(intentToMainPage);
 
             //findViewById(R.id.gmailSignInButton).setVisibility(View.GONE);

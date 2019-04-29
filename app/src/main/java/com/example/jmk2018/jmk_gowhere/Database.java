@@ -20,6 +20,25 @@ public class Database {
     String link;
     Integer booking;
 
+    public Integer getLike() {
+        return like;
+    }
+
+    public void setLike(Integer like) {
+        this.like = like;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    Integer like;
+    String group;
+
     public String getLink() {
         return link;
     }

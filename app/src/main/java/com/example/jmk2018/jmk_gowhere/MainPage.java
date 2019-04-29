@@ -1,11 +1,15 @@
 package com.example.jmk2018.jmk_gowhere;
 
+import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -24,6 +28,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +39,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -42,12 +49,21 @@ import com.algolia.instantsearch.helpers.InstantSearch;
 import com.algolia.instantsearch.helpers.Searcher;
 import com.algolia.instantsearch.ui.views.SearchBox;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.Objects;
 
 
-public class MainPage extends AppCompatActivity {
+public class MainPage extends FirebaseUIActivity {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -66,8 +82,19 @@ public class MainPage extends AppCompatActivity {
     private DrawerLayout mDrawerlayout;
     private NavigationView navigationView;
     private ActionBarDrawerToggle mToggle;
+    private Menu menu;
 
-    //LinearLayout linHotSearch;
+    private TextView navHeaderName;
+    private TextView navHeaderEmail;
+
+    private FirebaseAuth mAuth;
+    private DatabaseReference mUsers;
+    private FirebaseUser currentUser;
+
+    private Boolean setGoogleName;
+    private String username = "";
+
+    //private Boolean notSignIn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,10 +106,19 @@ public class MainPage extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setHomeAsUpIndicator(R.drawable.ic_menu_white_24dp);
+        actionBar.setTitle(Html.fromHtml("<font color='#ffffff'>GoWhere</font>"));
 
-        //linHotSearch = (LinearLayout) findViewById(R.id.linHotSearch);
+        mDrawerlayout = findViewById(R.id.drawerLayout);
+        navigationView = findViewById(R.id.Left_Navigation);
+        View headerView = navigationView.getHeaderView(0);
+        navHeaderName = headerView.findViewById(R.id.nav_header_name);
+        navHeaderEmail = headerView.findViewById(R.id.nav_header_email);
 
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
 
+        //notSignIn = getIntent().getBooleanExtra("notSignIn",false);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -99,8 +135,9 @@ public class MainPage extends AppCompatActivity {
 
         //-------------
 
-        mDrawerlayout = findViewById(R.id.drawerLayout);
-        navigationView = findViewById(R.id.Left_Navigation);
+
+        //navigationView.setItemIconTintList(null);
+        //navigationView.setItemTextColor(null);
 
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
@@ -115,12 +152,20 @@ public class MainPage extends AppCompatActivity {
                             mViewPager.setCurrentItem(0);
                         } else if (id == R.id.nav_promotion){
                             mViewPager.setCurrentItem(1);
-                        } else if (id == R.id.nav_frontpage){
-                            Intent intent = new Intent(MainPage.this, FrontPage.class);
-                            startActivity(intent);
                         } else if (id == R.id.nav_settings){
 
+                        } else if (id == R.id.nav_signout){
+                            if (isSignIn() == true){
+                                signOut();
+                            }
+                            Intent intent = new Intent(MainPage.this, FrontPage.class);
+                            startActivity(intent);
+                        } else if (id == R.id.nav_share){
+
+                        } else if (id == R.id.nav_send){
+
                         }
+
 
                         mDrawerlayout.closeDrawer(GravityCompat.START);
 
@@ -143,6 +188,7 @@ public class MainPage extends AppCompatActivity {
 
             @Override
             public void onDrawerClosed(@NonNull View view) {
+                clearMenuItem();
                 // Respond when the drawer is closed
             }
 
@@ -165,6 +211,20 @@ public class MainPage extends AppCompatActivity {
                 break;
         }
 
+        if (updateUI(currentUser)){
+            //navHeaderName.setText(dataSnapshot.child("Username").getValue().toString());
+            navHeaderEmail.setText(currentUser.getEmail());
+
+        }
+
+        setGoogleName = getIntent().getBooleanExtra("setGoogleName",false);
+
+        if (setGoogleName == true){
+            username = currentUser.getDisplayName();
+            navHeaderName.setText(username);
+            navHeaderEmail.setText(currentUser.getEmail());
+            //mUsers.child(mAuth.getCurrentUser().getUid()).child("Username").setValue(username);
+        }
 
     }
 
@@ -172,11 +232,9 @@ public class MainPage extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main_page, menu);
+        this.menu = menu;
 
         MenuItem searchViewItem = menu.findItem(R.id.action_search);
-        //SearchView searchView = (SearchView) searchViewItem.getActionView();
-        //searchView.clearFocus();
-        //searchView.setIconifiedByDefault(true);
 
         return true;
     }
@@ -258,14 +316,15 @@ public class MainPage extends AppCompatActivity {
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
 
-            Intent intentToFrontPage = new Intent();
+            /*Intent intentToFrontPage = new Intent();
             intentToFrontPage.setClass(MainPage.this,FrontPage.class);
-            startActivity(intentToFrontPage);
+            startActivity(intentToFrontPage);*/
+            finishAffinity();
 
         }
 
         this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Please click BACK again to Front Page", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Please click BACK again to exit this application", Toast.LENGTH_SHORT).show();
 
         new Handler().postDelayed(new Runnable() {
 
@@ -274,6 +333,75 @@ public class MainPage extends AppCompatActivity {
                 doubleBackToExitPressedOnce=false;
             }
         }, 2000);
+    }
+
+    private boolean updateUI(FirebaseUser user) {
+
+        if (user != null) {
+
+            mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+            mUsers.child(user.getUid()).child("Email").setValue(user.getEmail());
+
+            if (user.isEmailVerified()==true){
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isSignIn(){
+        FirebaseUser currentUser;
+        currentUser = mAuth.getCurrentUser();
+
+        return updateUI(currentUser);
+
+    }
+
+    private void clearMenuItem(){
+
+        int size = navigationView.getMenu().size();
+        for (int i = 0; i < size; i++) {
+            navigationView.getMenu().getItem(i).setChecked(false);
+        }
+
+    }
+
+    public void showAlertDialog(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Please Type In Your Username");
+
+        // Set up the input
+        final EditText input = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                username = input.getText().toString();
+                mUsers.child(mAuth.getCurrentUser().getUid()).child("Username").setValue(username);
+                //Toast.makeText(MainPage.this,username,Toast.LENGTH_LONG).show();
+            }
+        });
+
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                if (username == ""){
+                    Toast.makeText(MainPage.this,"Please type in your username",Toast.LENGTH_LONG).show();
+                    showAlertDialog();
+                }
+            }
+        });
+
+        builder.show();
+
     }
 
 

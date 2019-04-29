@@ -17,15 +17,28 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 
 public class TabPromotion extends Fragment{
 
+    private DatabaseReference mPromotion;
     private DatabaseReference mDatabase;
     private RecyclerView promotionRecyclerview;
+    /*String pAddress;
+    String pLink;
+    String pCategory;
+    String pImageUrl;
+    Double pLatitude;
+    Double pLongitude;
+    String pName;
+    String pPhone;*/
+
 
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -37,6 +50,7 @@ public class TabPromotion extends Fragment{
         promotionRecyclerview = rootView.findViewById(R.id.promotionRecyclerview);
         promotionRecyclerview.setHasFixedSize(true);
 
+        mPromotion = FirebaseDatabase.getInstance().getReference().child("Promotion");
         mDatabase = FirebaseDatabase.getInstance().getReference().child("Database");
 
         LinearLayoutManager promotionLLM = new LinearLayoutManager(getActivity());
@@ -48,43 +62,57 @@ public class TabPromotion extends Fragment{
     @Override
     public void onStart(){
         super.onStart();
-        FirebaseRecyclerAdapter<Database, CardviewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<Database, CardviewHolder>
-                (Database.class, R.layout.database_cardview_new, CardviewHolder.class, mDatabase){
+        FirebaseRecyclerAdapter<PromotionDatabase, PromotionCardviewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter<PromotionDatabase, PromotionCardviewHolder>
+                (PromotionDatabase.class, R.layout.promotion_database_cardview, PromotionCardviewHolder.class, mPromotion){
             @Override
-            protected void populateViewHolder(CardviewHolder viewHolder, final Database model, int position){
+            protected void populateViewHolder(PromotionCardviewHolder viewHolder, final PromotionDatabase model, int position){
                 viewHolder.setCategory(model.getCategory());
                 viewHolder.setName(model.getName());
-                viewHolder.setLocation(model.getLocation());
-                viewHolder.setPhone(model.getPhone());
-                viewHolder.setAddress(model.getAddress());
                 viewHolder.setImage(getContext(), model.getImageUrl());
-                viewHolder.setLatitude(model.getLatitude());
-                viewHolder.setLongitude(model.getLongitude());
-                viewHolder.setKeywords(model.getKeywords());
-                viewHolder.setLink(model.getLink());
+                viewHolder.setLogo(getContext(),model.getLogoUrl());
+                String pPostKey = viewHolder.setPostKey(model.getPostKey());
 
-                final String post_key = getRef(position).getKey();
-
-                viewHolder.mView.setOnClickListener(new View.OnClickListener(){
+                mDatabase.child(pPostKey).addValueEventListener(new ValueEventListener() {
                     @Override
-                    public void onClick(View view){
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                        Intent intent = new Intent(view.getContext(),CardViewTabbed.class);
-                        intent.putExtra("post_key",post_key);
+                        String pAddress = dataSnapshot.child("address").getValue(String.class);
+                        String pCategory = dataSnapshot.child("category").getValue(String.class);
+                        String pImageUrl = dataSnapshot.child("imageUrl").getValue(String.class);
+                        String pName = dataSnapshot.child("name").getValue(String.class);
+                        String pPhone = dataSnapshot.child("phone").getValue(String.class);
+                        String pLink = dataSnapshot.child("link").getValue(String.class);
+                        Double pLatitude = dataSnapshot.child("latitude").getValue(Double.TYPE);
+                        Double pLongitude = dataSnapshot.child("longitude").getValue(Double.TYPE);
 
-                        intent.putExtra("ImageUrl",model.getImageUrl());
-                        intent.putExtra("Category",model.getCategory());
-                        intent.putExtra("Name",model.getName());
-                        intent.putExtra("Phone Number",model.getPhone());
-                        intent.putExtra("Link",model.getLink());
-                        intent.putExtra("Address",model.getAddress());
-                        intent.putExtra("Latitude", model.getLatitude());
-                        intent.putExtra("Longitude", model.getLongitude());
+                        viewHolder.mView.setOnClickListener(view -> {
+                            Intent intent = new Intent(view.getContext(),CardViewTabbed.class);
+                            intent.putExtra("post_key",pPostKey);
+                            intent.putExtra("ImageUrl",pImageUrl);
+                            intent.putExtra("Category",pCategory);
+                            intent.putExtra("Name",pName);
+                            intent.putExtra("Phone Number",pPhone);
+                            intent.putExtra("Link",pLink);
+                            intent.putExtra("Address",pAddress);
+                            intent.putExtra("Latitude", pLatitude);
+                            intent.putExtra("Longitude", pLongitude);
+                            intent.putExtra("key",0);
 
-                        view.getContext().startActivity(intent);
+                            view.getContext().startActivity(intent);
+
+
+                        });
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
 
                     }
                 });
+
+
+
 
             }
         };

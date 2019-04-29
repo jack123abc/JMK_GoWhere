@@ -105,6 +105,9 @@ public class SearchItemActivity extends AppCompatActivity {
     private ImageView hotsearch1;
     private ImageView hotsearch2;
     private ImageView hotsearch3;
+    private TextView hotsearchtxt1;
+    private TextView hotsearchtxt2;
+    private TextView hotsearchtxt3;
 
     private Boolean counter;
     private Integer key;
@@ -129,6 +132,9 @@ public class SearchItemActivity extends AppCompatActivity {
         hotsearch1 = findViewById(R.id.hotsearch1);
         hotsearch2 = findViewById(R.id.hotsearch2);
         hotsearch3 = findViewById(R.id.hotsearch3);
+        hotsearchtxt1 = findViewById(R.id.hotsearchtxt1);
+        hotsearchtxt2 = findViewById(R.id.hotsearchtxt2);
+        hotsearchtxt3 = findViewById(R.id.hotsearchtxt3);
         key = getIntent().getIntExtra("key",0);
         txt = getIntent().getStringExtra("txt");
 
@@ -222,9 +228,17 @@ public class SearchItemActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                String imgUrl1 = dataSnapshot.child("1").getValue(String.class);
-                String imgUrl2 = dataSnapshot.child("2").getValue(String.class);
-                String imgUrl3 = dataSnapshot.child("3").getValue(String.class);
+                String imgUrl1 = dataSnapshot.child("9").getValue(String.class);
+                String imgUrl2 = dataSnapshot.child("10").getValue(String.class);
+                String imgUrl3 = dataSnapshot.child("11").getValue(String.class);
+
+                String name1 = dataSnapshot.child("12").getValue(String.class);
+                String name2 = dataSnapshot.child("13").getValue(String.class);
+                String name3 = dataSnapshot.child("14").getValue(String.class);
+
+                hotsearchtxt1.setText(name1);
+                hotsearchtxt2.setText(name2);
+                hotsearchtxt3.setText(name3);
 
                 Picasso.get().load(imgUrl1).
                         //transform(new CropCircleTransformation()).
@@ -239,6 +253,42 @@ public class SearchItemActivity extends AppCompatActivity {
                         transform(new ColorFilterTransformation(Color.argb(60, 100, 100, 100))).
                         into(hotsearch3);
 
+                hotsearch1.setOnClickListener(view -> {
+
+                    //searchView.setVisibility(View.GONE);
+                    searchBox.setVisibility(View.VISIBLE);
+                    //searchIcon.setVisibility(View.GONE);
+                    searchWithoutHits.setVisibility(View.GONE);
+                    hits.setVisibility(View.VISIBLE);
+                    searcher.search(name1);
+                    SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+                });
+
+                hotsearch2.setOnClickListener(view -> {
+
+                    //searchView.setVisibility(View.GONE);
+                    searchBox.setVisibility(View.VISIBLE);
+                    //searchIcon.setVisibility(View.GONE);
+                    searchWithoutHits.setVisibility(View.GONE);
+                    hits.setVisibility(View.VISIBLE);
+                    searcher.search(name2);
+                    SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+                });
+
+                hotsearch3.setOnClickListener(view -> {
+
+                    //searchView.setVisibility(View.GONE);
+                    searchBox.setVisibility(View.VISIBLE);
+                    //searchIcon.setVisibility(View.GONE);
+                    searchWithoutHits.setVisibility(View.GONE);
+                    hits.setVisibility(View.VISIBLE);
+                    searcher.search(name3);
+                    SoftKeyboardHelper.hide(SearchItemActivity.this,view);
+
+                });
+
             }
 
             @Override
@@ -246,42 +296,6 @@ public class SearchItemActivity extends AppCompatActivity {
 
 
             }
-        });
-
-        hotsearch1.setOnClickListener(view -> {
-
-            //searchView.setVisibility(View.GONE);
-            searchBox.setVisibility(View.VISIBLE);
-            //searchIcon.setVisibility(View.GONE);
-            searchWithoutHits.setVisibility(View.GONE);
-            hits.setVisibility(View.VISIBLE);
-            searcher.search("體驗");
-            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
-
-        });
-
-        hotsearch2.setOnClickListener(view -> {
-
-            //searchView.setVisibility(View.GONE);
-            searchBox.setVisibility(View.VISIBLE);
-            //searchIcon.setVisibility(View.GONE);
-            searchWithoutHits.setVisibility(View.GONE);
-            hits.setVisibility(View.VISIBLE);
-            searcher.search("手作");
-            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
-
-        });
-
-        hotsearch3.setOnClickListener(view -> {
-
-            //searchView.setVisibility(View.GONE);
-            searchBox.setVisibility(View.VISIBLE);
-            //searchIcon.setVisibility(View.GONE);
-            searchWithoutHits.setVisibility(View.GONE);
-            hits.setVisibility(View.VISIBLE);
-            searcher.search("休閑");
-            SoftKeyboardHelper.hide(SearchItemActivity.this,view);
-
         });
 
 
@@ -299,6 +313,7 @@ public class SearchItemActivity extends AppCompatActivity {
             Double latitude = null;
             Double longitude = null;
             String post_key = null;
+            String keyword = null;
 
             try {
                 name = hit.getString("name");
@@ -311,6 +326,7 @@ public class SearchItemActivity extends AppCompatActivity {
                 latitude = hit.getDouble("latitude");
                 longitude = hit.getDouble("longitude");
                 post_key = hit.getString("objectID");
+                keyword  = hit.getString("keywords");
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -328,6 +344,7 @@ public class SearchItemActivity extends AppCompatActivity {
             hitsTabbedIntent.putExtra("Longitude",longitude);
             hitsTabbedIntent.putExtra("search_post_key",post_key);
             hitsTabbedIntent.putExtra("key",1);
+            hitsTabbedIntent.putExtra("Tag",keyword);
             startActivity(hitsTabbedIntent);
         });
 
@@ -370,7 +387,7 @@ public class SearchItemActivity extends AppCompatActivity {
     @Override
     public void onStart() {
 
-        Toast.makeText(SearchItemActivity.this,"gg",Toast.LENGTH_LONG).show();
+        //Toast.makeText(SearchItemActivity.this,"gg",Toast.LENGTH_LONG).show();
 
         super.onStart();
 
