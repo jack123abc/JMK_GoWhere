@@ -91,7 +91,7 @@ public class MainPage extends FirebaseUIActivity {
     private DatabaseReference mUsers;
     private FirebaseUser currentUser;
 
-    private Boolean setGoogleName;
+    private Integer setGoogleName;
     private String username = "";
 
     //private Boolean notSignIn;
@@ -117,6 +117,8 @@ public class MainPage extends FirebaseUIActivity {
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
         updateUI(currentUser);
+
+        setGoogleName = getIntent().getIntExtra("setGoogleName",0);
 
         //notSignIn = getIntent().getBooleanExtra("notSignIn",false);
 
@@ -211,15 +213,46 @@ public class MainPage extends FirebaseUIActivity {
                 break;
         }
 
-        if (updateUI(currentUser)){
+        if (updateUI(currentUser) && isGoogleSignedIn() == false){
             //navHeaderName.setText(dataSnapshot.child("Username").getValue().toString());
-            navHeaderEmail.setText(currentUser.getEmail());
+            mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
 
-        }
+            mUsers.child(currentUser.getUid()).child("Username").addValueEventListener(
+                    new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-        setGoogleName = getIntent().getBooleanExtra("setGoogleName",false);
+                            String username = dataSnapshot.getValue().toString();
 
-        if (setGoogleName == true){
+                            navHeaderName.setText(username);
+
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    }
+            );
+
+            mUsers.child(currentUser.getUid()).child("Email").addValueEventListener(
+                    new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                            String email = dataSnapshot.getValue().toString();
+
+                            navHeaderEmail.setText(email);
+
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    }
+            );
+        } else if (updateUI(currentUser) && isGoogleSignedIn() == true){
             username = currentUser.getDisplayName();
             navHeaderName.setText(username);
             navHeaderEmail.setText(currentUser.getEmail());
@@ -402,6 +435,10 @@ public class MainPage extends FirebaseUIActivity {
 
         builder.show();
 
+    }
+
+    private boolean isGoogleSignedIn() {
+        return GoogleSignIn.getLastSignedInAccount(MainPage.this) != null;
     }
 
 

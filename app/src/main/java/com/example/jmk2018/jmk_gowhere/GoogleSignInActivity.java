@@ -226,7 +226,7 @@ public class GoogleSignInActivity extends BaseActivity implements View.OnClickLi
 
             Intent intentToMainPage = new Intent();
             intentToMainPage.setClass(GoogleSignInActivity.this,MainPage.class);
-            intentToMainPage.putExtra("setGoogleName",true);
+            intentToMainPage.putExtra("setGoogleName",1);
             startActivity(intentToMainPage);
 
             //findViewById(R.id.gmailSignInButton).setVisibility(View.GONE);

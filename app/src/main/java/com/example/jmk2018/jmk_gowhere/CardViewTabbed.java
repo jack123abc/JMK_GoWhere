@@ -25,6 +25,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.Log;
@@ -33,6 +34,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.Gallery;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -120,8 +122,12 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
     private Button uploadPhoto;
 
-    private DrawerLayout drawer;
+    private TextView allComments;
+    private RecyclerView mComments;
+    private EditText addComment;
+    private Button postComment;
 
+    private DrawerLayout drawer;
 
     private boolean mProcessLike = false;
     NavigationView navigationView;

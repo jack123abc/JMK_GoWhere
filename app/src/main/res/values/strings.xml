@@ -108,13 +108,27 @@
     <string name="signed_out">Signed Out</string>
     <string name="loading">Loading…</string>
     <string name="google_status_fmt">Google User: %s</string>
-    <string name="all_photos"> All Photos </string>
+    <string name="all_photos"> View all photos </string>
+    <string name="all_comments"> View all comments </string>
     <string name="upload"> Upload </string>
-
+    <string name="post"> Post </string>
     <string name="title_activity_full_screen_image">FullScreenImageActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 
     <string name="title_activity_logo">LogoActivity</string>
     <string name="category_experience">體驗</string>
+    <string name="title_activity_create_account">Sign in</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password (optional)</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
 </resources>

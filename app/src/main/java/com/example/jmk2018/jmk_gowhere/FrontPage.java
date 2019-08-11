@@ -1,6 +1,7 @@
 package com.example.jmk2018.jmk_gowhere;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -71,8 +73,6 @@ public class FrontPage extends FirebaseUIActivity implements
         findViewById(R.id.signInWithGmailButton).setOnClickListener(this);
         findViewById(R.id.textLoginLater).setOnClickListener(this);
 
-        mEmailField = findViewById(R.id.editText2);
-        mPasswordField = findViewById(R.id.editText3);
         textLoginLater = findViewById(R.id.textLoginLater);
 
         // [START initialize_auth]
@@ -88,6 +88,7 @@ public class FrontPage extends FirebaseUIActivity implements
         textLoginLater.setPaintFlags(textLoginLater.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
     }
+
 
 
 
@@ -150,27 +151,10 @@ public class FrontPage extends FirebaseUIActivity implements
 
         if (i == R.id.signInWithEmailButton) {
 
-            if (counter == 0) {
-
-                emailCreateAccount.setVisibility(View.GONE);
-                findViewById(R.id.textView3).setVisibility(View.GONE);
-                //textLoginLater.setVisibility(View.GONE);
-                counter++;
-
-            } else if (counter == 1) {
-
-                signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
-                if (validateForm()){
-                    counter = 0;
-                } else {
-                    counter = 1;
-                }
-
-            }
-
-            //Intent intentToEmailLogin = new Intent();
-            //intentToEmailLogin.setClass(FrontPage.this, EmailPasswordActivity.class);
-            //startActivity(intentToEmailLogin);
+            Intent intent = new Intent();
+            intent.putExtra("signin",1);
+            intent.setClass(FrontPage.this, CreateAccountActivity.class);
+            startActivity(intent);
             //findViewById(R.id.signInWithGmailButton).setVisibility(View.INVISIBLE);
 
         } else if (i == R.id.signInWithGmailButton) {
@@ -188,7 +172,12 @@ public class FrontPage extends FirebaseUIActivity implements
 
         } else if (i == R.id.emailCreateAccountButton2) {
 
-            createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
+            Intent intent = new Intent();
+            intent.putExtra("signin",0);
+            intent.setClass(this,CreateAccountActivity.class);
+            startActivity(intent);
+            //showAlertDialog();
+            //createAccount(mEmailField.getText().toString(), mPasswordField.getText().toString());
             //showAlertDialog();
 
         } else if (i == R.id.textLoginLater) {
@@ -202,6 +191,7 @@ public class FrontPage extends FirebaseUIActivity implements
 
 
     }
+
 
     @Override
     public void onBackPressed() {
@@ -362,33 +352,22 @@ public class FrontPage extends FirebaseUIActivity implements
         // [END sign_in_with_email]
     }
 
-    /*public void showAlertDialog(){
+    public void showAlertDialog(){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Please Type In Your Username");
 
-        // Set up the input
         final EditText input = new EditText(this);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
-        // Set up the buttons
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                username = input.getText().toString();
+        builder.setPositiveButton("OK", (dialog, which) ->
+                username = input.getText().toString());
 
-            }
-        });
-
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialogInterface) {
-                if (username == ""){
-                    Toast.makeText(FrontPage.this,"Please type in your username",Toast.LENGTH_LONG).show();
-                    showAlertDialog();
-                }
+        builder.setOnDismissListener(dialogInterface -> {
+            if (username == ""){
+                Toast.makeText(FrontPage.this,"Please type in your username",Toast.LENGTH_LONG).show();
+                showAlertDialog();
             }
         });
 
@@ -396,7 +375,7 @@ public class FrontPage extends FirebaseUIActivity implements
 
     }
 
-    public void updateUserProfileName(String name){
+    /*public void updateUserProfileName(String name){
 
         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                 .setDisplayName(name)
