@@ -92,7 +92,15 @@
                 android:resource="@xml/picker_provider_paths" />
         </provider>
 
-        <activity android:name=".CreateAccountActivity"></activity>
+        <activity android:name=".CreateAccountActivity" />
+        <activity android:name=".HtmlLogoActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".CommentFragmentActivity" />
     </application>
 
 </manifest>

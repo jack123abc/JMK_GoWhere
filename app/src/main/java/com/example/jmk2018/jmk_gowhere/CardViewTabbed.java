@@ -10,24 +10,32 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.media.ExifInterface;
+import android.media.JetPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.sax.StartElementListener;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,6 +57,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ImageViewTargetFactory;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -60,6 +69,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -75,6 +85,8 @@ import org.w3c.dom.Text;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Random;
 
 import jp.wasabeef.picasso.transformations.CropSquareTransformation;
 import jp.wasabeef.picasso.transformations.RoundedCornersTransformation;
@@ -98,10 +110,12 @@ public class CardViewTabbed extends FirebaseUIActivity {
     private DatabaseReference mDatabasePhotos;
     private StorageReference mStorage;
     private DatabaseReference mDatabase;
+    private DatabaseReference mComments;
     DatabaseReference mDatabaseLike;
     FirebaseAuth mAuth;
     DatabaseReference mUsers;
     FirebaseUser currentUser;
+    private String username = "";
 
     private ImageView photo1;
     private ImageView photo2;
@@ -123,19 +137,27 @@ public class CardViewTabbed extends FirebaseUIActivity {
     private Button uploadPhoto;
 
     private TextView allComments;
-    private RecyclerView mComments;
-    private EditText addComment;
+    private EditText editTextComment;
     private Button postComment;
+    private Long numOfComments;
 
     private DrawerLayout drawer;
+    private TextView navHeaderName;
+    private TextView navHeaderEmail;
 
     private boolean mProcessLike = false;
     NavigationView navigationView;
+
+    private RecyclerView commentsRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card_tabbed_new);
+
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
 
         cardCategory = getIntent().getStringExtra("Category");
         cardName = getIntent().getStringExtra("Name");
@@ -155,6 +177,14 @@ public class CardViewTabbed extends FirebaseUIActivity {
             post_key = getIntent().getStringExtra("search_post_key");
 
         }
+
+        mDatabasePhotos = FirebaseDatabase.getInstance().getReference().child("Photos");
+        mStorage = FirebaseStorage.getInstance().getReference();
+        mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("Database");
+        mComments = FirebaseDatabase.getInstance().getReference().child("Comments");
+        Query recentComments = mComments.child(post_key).limitToLast(3);
+        recentComments.keepSynced(true);
 
         allPhotos = (TextView) findViewById(R.id.allPhotos);
         allPhotos.setPaintFlags(allPhotos.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
@@ -194,6 +224,66 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
         txtLink.setPaintFlags(txtLink.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
 
+        allComments = findViewById(R.id.allComments);
+        postComment = findViewById(R.id.buttonPostComment);
+        editTextComment = findViewById(R.id.editTextAddComment);
+        commentsRecyclerView = findViewById(R.id.commentsRecyclerView);
+        commentsRecyclerView.setHasFixedSize(false);
+        commentsRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+
+        FirebaseRecyclerAdapter<Comments, CommentsViewHolder> adapter = new FirebaseRecyclerAdapter<Comments, CommentsViewHolder>
+                (Comments.class, R.layout.comments_cardview, CommentsViewHolder.class, recentComments){
+
+            @Override
+            protected void populateViewHolder(final CommentsViewHolder viewHolder, final Comments model, int position){
+
+                mUsers.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                        String username = dataSnapshot.child(model.getPublisherId()).child("Username").getValue(String.class);
+                        viewHolder.setPublisher(username);
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+
+                viewHolder.setContent(model.getComment());
+
+            }
+        };
+
+        commentsRecyclerView.setAdapter(adapter);
+
+        mComments.child(post_key).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                numOfComments = dataSnapshot.getChildrenCount();
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        allComments.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setClass(CardViewTabbed.this,CommentFragmentActivity.class);
+                intent.putExtra("post_key",post_key);
+                startActivity(intent);
+            }
+        });
+
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -209,7 +299,9 @@ public class CardViewTabbed extends FirebaseUIActivity {
         });
 
         navigationView = (NavigationView) findViewById(R.id.nav_view);
-        //navigationView.setNavigationItemSelectedListener(this);
+        View headerView = navigationView.getHeaderView(0);
+        navHeaderName = headerView.findViewById(R.id.nav_header_name);
+        navHeaderEmail = headerView.findViewById(R.id.nav_header_email);
         navigationView.setItemIconTintList(null);
         navigationView.setNavigationItemSelectedListener(
                 item -> {
@@ -242,6 +334,215 @@ public class CardViewTabbed extends FirebaseUIActivity {
                 }
         );
 
+        if (updateUI(currentUser)){
+
+            postComment.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    if(editTextComment.getText().toString().equals("")){
+
+                        Toast.makeText(CardViewTabbed.this,"You can't post an empty comment.",Toast.LENGTH_SHORT).show();
+
+                    } else {
+
+                        mUsers.child(currentUser.getUid()).child("Username").addValueEventListener(
+                                new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                                        username = dataSnapshot.getValue().toString();
+
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                }
+                        );
+
+                        //addComment(editTextComment.getText().toString(),currentUser.getUid(), username);
+
+                        addComment();
+
+                        Intent intent = new Intent();
+                        intent.setClass(CardViewTabbed.this,CommentFragmentActivity.class);
+                        intent.putExtra("postid",currentUser.getUid());
+                        intent.putExtra("username",username);
+                        intent.putExtra("post_key", post_key);
+                        startActivity(intent);
+
+
+
+                    }
+                }
+            });
+
+            uploadPhoto.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    PickImageDialog.build(new PickSetup()
+                            .setButtonOrientation(LinearLayout.HORIZONTAL))
+                            .setOnPickResult(new IPickResult() {
+                                @Override
+                                public void onPickResult(PickResult r) {
+                                    //TODO: do what you have to...
+                                    r.getBitmap();
+                                    r.getError();
+                                    r.getUri();
+
+                                    Uri uri = r.getUri();
+
+                                    final StorageReference filepath = mStorage.child("uploadPhoto").child(uri.getLastPathSegment());
+
+                                    showProgressDialog();
+
+                                    filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                                            filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                                @Override
+                                                public void onSuccess(Uri uri) {
+                                                    final Uri downloadUrl = uri;
+                                                    //Do what you want with the url
+
+                                                    mDatabasePhotos.addListenerForSingleValueEvent(new ValueEventListener() {
+                                                        @Override
+                                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                            long numOfChild = dataSnapshot.child(post_key).getChildrenCount();
+
+                                                            //Toast.makeText(CardViewTabbed.this, String.valueOf(numOfChild), Toast.LENGTH_LONG).show();
+
+                                                            if (numOfChild > 0){
+
+                                                                mDatabasePhotos.child(post_key).child(String.valueOf(numOfChild+1)).child("imageUrl").setValue(downloadUrl.toString());
+
+                                                            }else{
+
+                                                                mDatabasePhotos.child(post_key).child("1").child("imageUrl").setValue(downloadUrl.toString());
+
+                                                            }
+
+
+                                                        }
+
+                                                        @Override
+                                                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                                        }
+                                                    });
+
+
+
+                                                    Toast.makeText(CardViewTabbed.this, "Upload Done!", Toast.LENGTH_LONG).show();
+
+                                                    hideProgressDialog();
+
+                                                }
+
+                                            });
+
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+
+                                            Toast.makeText(CardViewTabbed.this, "Failed ", Toast.LENGTH_LONG).show();
+
+                                            hideProgressDialog();
+                                        }
+                                    });
+
+                                }
+                            })
+                            .setOnPickCancel(new IPickCancel() {
+                                @Override
+                                public void onCancelClick() {
+                                    //TODO: do what you have to if user clicked cancel
+                                }
+                            }).show(getSupportFragmentManager());
+
+                    //Intent pickPhoto = new Intent(Intent.ACTION_PICK);
+                    //pickPhoto.setType("image/*");
+
+                    //startActivityForResult(pickPhoto,GALLERY_INTENT);
+
+
+                }
+            });
+
+            if (isGoogleSignedIn() == false){
+
+                mUsers.child(currentUser.getUid()).child("Username").addValueEventListener(
+                        new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                                String username = dataSnapshot.getValue().toString();
+                                navHeaderName.setText(username);
+
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        }
+                );
+
+                mUsers.child(currentUser.getUid()).child("Email").addValueEventListener(
+                        new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                                String email = dataSnapshot.getValue().toString();
+                                navHeaderEmail.setText(email);
+
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        }
+                );
+
+            } else {
+
+                username = currentUser.getDisplayName();
+                navHeaderName.setText(username);
+                navHeaderEmail.setText(currentUser.getEmail());
+
+            }
+
+        } else {
+
+            postComment.setOnClickListener(new View.OnClickListener() {
+
+                public void onClick(View view) {
+
+                    Toast.makeText(CardViewTabbed.this,"Please sign in first.",Toast.LENGTH_SHORT).show();
+
+                }
+            });
+
+            uploadPhoto.setOnClickListener(new View.OnClickListener() {
+
+                public void onClick(View view) {
+
+                    Toast.makeText(CardViewTabbed.this,"Please sign in first.",Toast.LENGTH_SHORT).show();
+
+                }
+            });
+
+            navHeaderName.setText("");
+            navHeaderEmail.setText("");
+
+        }
+
         drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(@NonNull View view, float v) {
@@ -271,10 +572,6 @@ public class CardViewTabbed extends FirebaseUIActivity {
         txtLink.setText(cardLink);
         txtAddress.setText(cardAddress);
         txtKeywords.setText(cardTag);
-
-        mDatabasePhotos = FirebaseDatabase.getInstance().getReference().child("Photos");
-
-        mStorage = FirebaseStorage.getInstance().getReference();
 
         mDatabasePhotos.addValueEventListener(new ValueEventListener() {
             @Override
@@ -357,15 +654,6 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
                         }
                     });
-
-                //}
-
-                /*Glide.with(getApplicationContext()).load(imgUrl2).into(photo2);
-                Glide.with(getApplicationContext()).load(imgUrl3).into(photo3);
-                Glide.with(getApplicationContext()).load(imgUrl4).into(photo4);*/
-
-
-
             }
 
             @Override
@@ -417,104 +705,7 @@ public class CardViewTabbed extends FirebaseUIActivity {
             }
         });
 
-        uploadPhoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                PickImageDialog.build(new PickSetup()
-                    .setButtonOrientation(LinearLayout.HORIZONTAL))
-                        .setOnPickResult(new IPickResult() {
-                            @Override
-                            public void onPickResult(PickResult r) {
-                                //TODO: do what you have to...
-                                r.getBitmap();
-                                r.getError();
-                                r.getUri();
-
-                                Uri uri = r.getUri();
-
-                                final StorageReference filepath = mStorage.child("uploadPhoto").child(uri.getLastPathSegment());
-
-                                showProgressDialog();
-
-                                filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-                                        filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                            @Override
-                                            public void onSuccess(Uri uri) {
-                                                final Uri downloadUrl = uri;
-                                                //Do what you want with the url
-
-                                                mDatabasePhotos.addListenerForSingleValueEvent(new ValueEventListener() {
-                                                    @Override
-                                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                        long numOfChild = dataSnapshot.child(post_key).getChildrenCount();
-
-                                                        //Toast.makeText(CardViewTabbed.this, String.valueOf(numOfChild), Toast.LENGTH_LONG).show();
-
-                                                        if (numOfChild > 0){
-
-                                                            mDatabasePhotos.child(post_key).child(String.valueOf(numOfChild+1)).child("imageUrl").setValue(downloadUrl.toString());
-
-                                                        }else{
-
-                                                            mDatabasePhotos.child(post_key).child("1").child("imageUrl").setValue(downloadUrl.toString());
-
-                                                        }
-
-
-                                                    }
-
-                                                    @Override
-                                                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                                    }
-                                                });
-
-
-
-                                                Toast.makeText(CardViewTabbed.this, "Upload Done!", Toast.LENGTH_LONG).show();
-
-                                                hideProgressDialog();
-
-                                            }
-
-                                        });
-
-                                    }
-                                }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-
-                                        Toast.makeText(CardViewTabbed.this, "Failed ", Toast.LENGTH_LONG).show();
-
-                                        hideProgressDialog();
-                                    }
-                                });
-
-                            }
-                        })
-                        .setOnPickCancel(new IPickCancel() {
-                            @Override
-                            public void onCancelClick() {
-                                //TODO: do what you have to if user clicked cancel
-                            }
-                        }).show(getSupportFragmentManager());
-
-                //Intent pickPhoto = new Intent(Intent.ACTION_PICK);
-                //pickPhoto.setType("image/*");
-
-                //startActivityForResult(pickPhoto,GALLERY_INTENT);
-
-
-            }
-        });
-
         numOfLikes = findViewById(R.id.numberOfLikes);
-
-        mDatabase = FirebaseDatabase.getInstance().getReference().child("Database");
 
         mDatabase.child(post_key).addValueEventListener(new ValueEventListener() {
             @Override
@@ -531,10 +722,6 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
             }
         });
-
-        mAuth = FirebaseAuth.getInstance();
-        currentUser = mAuth.getCurrentUser();
-        updateUI(currentUser);
 
         mDatabaseLike = FirebaseDatabase.getInstance().getReference().child("Likes");
 
@@ -608,6 +795,8 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
         });
 
+
+
     }
 
     /*@Override
@@ -669,34 +858,6 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
-    /*@SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if(id == R.id.nav_explore){
-            Intent intent = new Intent(CardViewTabbed.this, MainPage.class);
-            intent.putExtra("Tab",0);
-            startActivity(intent);
-            //mViewPager.setCurrentItem(0);
-        } else if (id == R.id.nav_promotion){
-            Intent intent = new Intent(CardViewTabbed.this, MainPage.class);
-            intent.putExtra("Tab",1);
-            startActivity(intent);
-            //mViewPager.setCurrentItem(1);
-        } else if (id == R.id.nav_frontpage){
-            Intent intent = new Intent(CardViewTabbed.this, FrontPage.class);
-            startActivity(intent);
-        } else if (id == R.id.nav_settings){
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }*/
 
     public static int getCameraPhotoOrientation(String imageFilePath) {
         int rotate = 0;
@@ -779,5 +940,61 @@ public class CardViewTabbed extends FirebaseUIActivity {
 
     }
 
+    private boolean isGoogleSignedIn() {
+        return GoogleSignIn.getLastSignedInAccount(CardViewTabbed.this) != null;
+    }
+
+    private void addComment(){
+
+        long counter;
+
+        counter = numOfComments + 1;
+
+        mComments = FirebaseDatabase.getInstance().getReference().child("Comments");
+
+        mComments.child(post_key).child(String.valueOf(counter)).child("comment").setValue(editTextComment.getText().toString());
+        mComments.child(post_key).child(String.valueOf(counter)).child("publisherId").setValue(currentUser.getUid());
+
+        editTextComment.setText("");
+
+        /*HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("comment", editTextComment.getText().toString());
+        hashMap.put("publisher", currentUser.getUid());
+
+        mComments.child(post_key).push().setValue(hashMap);*/
+
+        /*if (numOfComments == 0){
+
+            mComments.child(post_key).child("1").child("comment").setValue(editTextComment.getText().toString());
+            mComments.child(post_key).child("1").child("publisherId").setValue(currentUser.getUid());
+            //mComments.child(post_key).child("1").child("publisher").setValue(username);
+
+        } else {
+        }*/
+
+
+
+    }
+
+    public void onStart() {
+        super.onStart();
+
+    }
+
+
+    /*private String randomStringGenerator(int length){
+
+        String DATA = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        Random RANDOM = new Random();
+
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            sb.append(DATA.charAt(RANDOM.nextInt(DATA.length())));
+        }
+
+        return sb.toString();
+
+    }*/
 
 }

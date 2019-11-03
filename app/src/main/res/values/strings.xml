@@ -115,7 +115,6 @@
     <string name="title_activity_full_screen_image">FullScreenImageActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
-
     <string name="title_activity_logo">LogoActivity</string>
     <string name="category_experience">體驗</string>
     <string name="title_activity_create_account">Sign in</string>
@@ -131,4 +130,7 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

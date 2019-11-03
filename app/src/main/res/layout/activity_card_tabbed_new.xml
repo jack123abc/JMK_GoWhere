@@ -388,14 +388,12 @@
                     android:id="@+id/buttonPostComment"
                     android:layout_width="89dp"
                     android:layout_height="25dp"
-                    android:layout_marginTop="16dp"
                     android:layout_marginEnd="8dp"
                     android:layout_marginBottom="8dp"
                     android:background="#F97E39"
                     android:text="@string/post"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/recyclerViewComments" />
+                    app:layout_constraintEnd_toEndOf="parent" />
 
                 <ImageView
                     android:id="@+id/imageView28"
@@ -433,34 +431,45 @@
                     app:layout_constraintTop_toTopOf="@+id/name"
                     app:srcCompat="@drawable/ic_favorite_border_black_24dp" />
 
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/recyclerViewComments"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginRight="16dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/comments" />
-
                 <EditText
                     android:id="@+id/editTextAddComment"
                     android:layout_width="0dp"
                     android:layout_height="25dp"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="16dp"
                     android:layout_marginEnd="16sp"
                     android:layout_marginBottom="8dp"
                     android:background="@android:drawable/screen_background_light_transparent"
                     android:ems="10"
                     android:hint="Add a comment..."
                     android:inputType="text"
-                    android:textSize="10sp"
+                    android:textSize="15sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/buttonPostComment"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="8dp"
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/editTextAddComment"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/recyclerViewComments" />
+                    app:layout_constraintTop_toBottomOf="@+id/comments">
+
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/commentsRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toTopOf="@+id/editTextAddComment"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/comments" />
+                </LinearLayout>
 
             </android.support.constraint.ConstraintLayout>
         </ScrollView>

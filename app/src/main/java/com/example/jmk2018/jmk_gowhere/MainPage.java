@@ -223,7 +223,6 @@ public class MainPage extends FirebaseUIActivity {
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
                             String username = dataSnapshot.getValue().toString();
-
                             navHeaderName.setText(username);
 
                         }
@@ -241,7 +240,6 @@ public class MainPage extends FirebaseUIActivity {
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
                             String email = dataSnapshot.getValue().toString();
-
                             navHeaderEmail.setText(email);
 
                         }
